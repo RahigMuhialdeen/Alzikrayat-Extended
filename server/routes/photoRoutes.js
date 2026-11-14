@@ -1,5 +1,7 @@
+
 const express = require('express');
 const router = express.Router();
+const requireAuth = require('../middleware/auth');
 
 const {
     getAllPhotos,
@@ -9,16 +11,26 @@ const {
     upload
 } = require('../controllers/photoController');
 
+const {
+    validatePhoto
+} = require('../middleware/validation');
+
 // Get all photos
 router.get('/', getAllPhotos);
 
-// Get single photo
+// Get a single photo
 router.get('/:id', getPhotoById);
 
-// Upload photo
-router.post('/upload', upload.single('photo'), uploadPhoto);
+// Upload a photo
+router.post(
+    '/upload',
+    requireAuth,
+    upload.single('photo'),
+    validatePhoto,
+    uploadPhoto
+);
 
-// Delete photo
-router.delete('/:id', deletePhoto);
+// Delete a photo
+router.delete('/:id', requireAuth, deletePhoto);
 
 module.exports = router;

@@ -28,7 +28,14 @@ const getCommentsByPhoto = async (req, res) => {
 // Add a new comment
 const addComment = async (req, res) => {
     try {
-        const { photoId, userId, comment } = req.body;
+        const { photoId, comment } = req.body;
+const userId = req.session.userId;
+
+if (!mongoose.Types.ObjectId.isValid(photoId)) {
+    return res.status(400).json({
+        message: 'Invalid photo ID'
+    });
+}
 
         const newComment = new Comment({
             photoId,
@@ -54,17 +61,11 @@ const addComment = async (req, res) => {
 // Delete a comment
 const deleteComment = async (req, res) => {
     try {
-        const { userId } = req.body;
+        const userId = req.session.userId;
 
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({
                 message: 'Invalid comment ID'
-            });
-        }
-
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({
-                message: 'Invalid user ID'
             });
         }
 

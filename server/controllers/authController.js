@@ -65,10 +65,28 @@ const loginUser = async (req, res) => {
             });
         }
 
+        req.session.regenerate((error) => {
+    if (error) {
+        return res.status(500).json({
+            message: 'Session creation failed'
+        });
+    }
+
+    req.session.userId = user._id.toString();
+
+    req.session.save((error) => {
+        if (error) {
+            return res.status(500).json({
+                message: 'Session saving failed'
+            });
+        }
+
         res.status(200).json({
             message: 'Login successful',
             userId: user._id
         });
+    });
+});
 
     } catch (error) {
         res.status(500).json({
@@ -78,7 +96,25 @@ const loginUser = async (req, res) => {
     }
 };
 
+// Logout user
+const logoutUser = (req, res) => {
+    req.session.destroy((error) => {
+        if (error) {
+            return res.status(500).json({
+                message: 'Logout failed'
+            });
+        }
+
+        res.clearCookie('connect.sid');
+
+        res.status(200).json({
+            message: 'Logout successful'
+        });
+    });
+};
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    logoutUser
 };

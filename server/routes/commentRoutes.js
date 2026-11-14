@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const requireAuth = require('../middleware/auth');
 
 const {
     getCommentsByPhoto,
@@ -7,11 +8,15 @@ const {
     deleteComment
 } = require('../controllers/commentController');
 
+const {
+    validateComment
+} = require('../middleware/validation');
+
 // Get comments for a photo
 router.get('/:photoId', getCommentsByPhoto);
 
 // Add a new comment
-router.post('/', addComment);
+router.post('/', requireAuth, validateComment, addComment);
 
 // Delete a comment
 router.delete('/:id', deleteComment);

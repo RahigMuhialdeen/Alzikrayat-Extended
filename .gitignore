@@ -6,3 +6,7 @@ node_modules/
 
 # Build files
 dist/
+
+# Uploaded user photos
+server/uploads/*
+!server/uploads/.gitkeep

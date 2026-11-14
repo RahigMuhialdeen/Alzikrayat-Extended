@@ -1,19 +1,55 @@
-const mongoose = require('mongoose');
 const Photo = require('../models/Photo');
+const Comment = require('../models/Comment');
+const mongoose = require('mongoose');
+
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+
+const uploadDir = path.join(__dirname, '..', 'uploads');
+
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
 
-const upload = multer({ storage });
+// Allowed image formats
+const allowedMimeTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+];
+
+// Check image type
+const fileFilter = (req, file, cb) => {
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        const error = new Error(
+            'Only JPEG, PNG, and WebP image files are allowed'
+        );
+        error.statusCode = 400;
+        cb(error, false);
+    }
+};
+
+// Multer configuration
+const upload = multer({
+    storage,
+    fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
+});
 
 // Get all photos
 const getAllPhotos = async (req, res) => {
@@ -67,13 +103,8 @@ const uploadPhoto = async (req, res) => {
             });
         }
 
-        const { userId, title, description } = req.body;
-
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({
-                message: 'Invalid user ID'
-            });
-        }
+        const { title, description } = req.body;
+const userId = req.session.userId;
 
         if (!title || !title.trim()) {
             return res.status(400).json({
@@ -96,29 +127,42 @@ const uploadPhoto = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({
-            message: 'Photo upload failed',
-            error: error.message
-        });
+    // Delete the uploaded file if saving fails
+    if (req.file && req.file.path) {
+        try {
+            await fs.promises.unlink(req.file.path);
+        } catch (fileError) {
+            if (fileError.code !== 'ENOENT') {
+                console.error('Uploaded file cleanup failed:', fileError);
+            }
+        }
     }
+
+    console.error('Photo upload failed:', error);
+
+    res.status(500).json({
+        message: 'Photo upload failed',
+        error: error.message
+    });
+}
 };
 
 // Delete a photo
 const deletePhoto = async (req, res) => {
     try {
-        const { userId } = req.body;
-
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({
-                message: 'Invalid photo ID'
-            });
-        }
+        const userId = req.session.userId;
 
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({
                 message: 'Invalid user ID'
             });
         }
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({
+        message: 'Invalid photo ID'
+    });
+}
 
         const photo = await Photo.findById(req.params.id);
 
@@ -133,17 +177,35 @@ const deletePhoto = async (req, res) => {
                 message: 'You are not authorized to delete this photo'
             });
         }
+        await Comment.deleteMany({ photoId: photo._id });
 
         await Photo.findByIdAndDelete(req.params.id);
 
+        // Delete the physical image file
+        const filePath = path.join(
+            __dirname,
+            '..',
+            'uploads',
+            path.basename(photo.fileName)
+        );
+
+        try {
+            await fs.promises.unlink(filePath);
+        } catch (fileError) {
+            if (fileError.code !== 'ENOENT') {
+                console.error('Image file deletion failed:', fileError);
+            }
+        }
+
         res.status(200).json({
-            message: 'Photo deleted successfully'
+            message: 'Photo and its file deleted successfully'
         });
 
     } catch (error) {
+        console.error('Photo deletion failed:', error);
+
         res.status(500).json({
-            message: 'Photo deletion failed',
-            error: error.message
+            message: 'Photo deletion failed'
         });
     }
 };
