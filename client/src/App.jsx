@@ -13,6 +13,29 @@ function App() {
     setCurrentPage('memories')
   }
 
+  // Handle user logout
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/auth/logout',
+        {
+          method: 'POST',
+          credentials: 'include'
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Logout failed')
+      }
+
+      setCurrentUserId(null)
+      setCurrentPage('login')
+
+    } catch (err) {
+      alert(err.message || 'Something went wrong')
+    }
+  }
+
   if (currentPage === 'register') {
     return (
       <Register
@@ -58,7 +81,7 @@ function App() {
             <button
               type="button"
               className="signup-button"
-              onClick={() => setCurrentPage('login')}
+              onClick={handleLogout}
             >
               Log out
             </button>
@@ -125,7 +148,6 @@ function App() {
           >
             Log in
           </button>
-
           <button
             type="button"
             className="signup-button"
@@ -143,6 +165,7 @@ function App() {
               <span className="eyebrow-dot"></span>
               EVERY MOMENT MATTERS
             </span>
+
             <h1>
               Your memories,
               <br />
