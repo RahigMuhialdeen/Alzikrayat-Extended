@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './Login.css'
 
-function Login({ onRegisterClick, onHomeClick }) {
+function Login({ onRegisterClick, onHomeClick, onLoginSuccess }) {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -43,7 +43,7 @@ function Login({ onRegisterClick, onHomeClick }) {
         throw new Error(data.message || 'Login failed')
       }
 
-      alert('Login successful!')
+      onLoginSuccess()
 
     } catch (err) {
       setError(err.message || 'Something went wrong')

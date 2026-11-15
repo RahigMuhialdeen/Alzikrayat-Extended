@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import Register from './components/Register'
 import Login from './components/Login'
+import Memories from './components/Memories'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home')
@@ -20,7 +21,79 @@ function App() {
       <Login
         onRegisterClick={() => setCurrentPage('register')}
         onHomeClick={() => setCurrentPage('home')}
+        onLoginSuccess={() => setCurrentPage('memories')}
       />
+    )
+  }
+
+  if (currentPage === 'memories') {
+    return (
+      <div className="app">
+        <header className="navbar">
+          <a href="#memories" className="brand">
+            <span className="brand-icon">✿</span>
+            <span>Alzikrayat</span>
+          </a>
+
+          <nav className="nav-links">
+            <a href="#memories" className="active">Memories</a>
+            <a href="#about">About</a>
+          </nav>
+
+          <div className="nav-actions">
+            <button
+              type="button"
+              className="login-link"
+              onClick={() => setCurrentPage('home')}
+            >
+              Home
+            </button>
+
+            <button
+              type="button"
+              className="signup-button"
+              onClick={() => setCurrentPage('login')}
+            >
+              Log out
+            </button>
+          </div>
+        </header>
+
+        <main>
+          <section className="memories-section" id="memories">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">YOUR PERSONAL SPACE</span>
+                <h2>Welcome to your memories</h2>
+                <p>Your special moments deserve to be remembered.</p>
+              </div>
+
+              <span className="memory-symbol">✿</span>
+            </div>
+
+            <Memories />
+          </section>
+
+          <section className="about-section" id="about">
+            <span className="about-symbol">✧</span>
+            <p>
+              "Some moments become memories.
+              Some memories become treasures."
+            </p>
+            <span className="about-name">— Alzikrayat</span>
+          </section>
+        </main>
+
+        <footer className="footer">
+          <a href="#memories" className="brand footer-brand">
+            <span className="brand-icon">✿</span>
+            <span>Alzikrayat</span>
+          </a>
+
+          <p>Made for the moments that matter.</p>
+          <span>© 2026 Alzikrayat</span>
+        </footer>
+      </div>
     )
   }
 
@@ -64,7 +137,6 @@ function App() {
               <span className="eyebrow-dot"></span>
               EVERY MOMENT MATTERS
             </span>
-
             <h1>
               Your memories,
               <br />
