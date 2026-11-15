@@ -237,3 +237,26 @@
     width: 100%;
   }
 }
+
+.delete-memory-button {
+  width: 100%;
+  margin-top: 18px;
+  padding: 11px 16px;
+  background: #a34b45;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.delete-memory-button:hover:not(:disabled) {
+  background: #823832;
+}
+
+.delete-memory-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -43,7 +43,7 @@ function Login({ onRegisterClick, onHomeClick, onLoginSuccess }) {
         throw new Error(data.message || 'Login failed')
       }
 
-      onLoginSuccess()
+      onLoginSuccess(data.userId)
 
     } catch (err) {
       setError(err.message || 'Something went wrong')

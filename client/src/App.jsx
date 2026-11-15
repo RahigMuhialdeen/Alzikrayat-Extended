@@ -6,6 +6,12 @@ import Memories from './components/Memories'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home')
+  const [currentUserId, setCurrentUserId] = useState(null)
+
+  const onLoginSuccess = (userId) => {
+    setCurrentUserId(userId)
+    setCurrentPage('memories')
+  }
 
   if (currentPage === 'register') {
     return (
@@ -21,7 +27,7 @@ function App() {
       <Login
         onRegisterClick={() => setCurrentPage('register')}
         onHomeClick={() => setCurrentPage('home')}
-        onLoginSuccess={() => setCurrentPage('memories')}
+        onLoginSuccess={onLoginSuccess}
       />
     )
   }
@@ -71,7 +77,7 @@ function App() {
               <span className="memory-symbol">✿</span>
             </div>
 
-            <Memories />
+            <Memories currentUserId={currentUserId} />
           </section>
 
           <section className="about-section" id="about">

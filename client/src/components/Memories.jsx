@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import './Memories.css'
 
-function Memories() {
+function Memories({ currentUserId }) {
   const [photos, setPhotos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -15,27 +15,30 @@ function Memories() {
   const [uploadError, setUploadError] = useState('')
   const [success, setSuccess] = useState('')
 
-  useEffect(() => {
-    const fetchPhotos = async () => {
-      try {
-        const response = await fetch(
-          'http://localhost:5000/api/photos'
-        )
+  const [deletingPhotoId, setDeletingPhotoId] = useState(null)
+  const [deleteError, setDeleteError] = useState('')
 
-        if (!response.ok) {
-          throw new Error('Failed to load memories')
-        }
+  const fetchPhotos = async () => {
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/photos'
+      )
 
-        const data = await response.json()
-        setPhotos(data)
-
-      } catch (err) {
-        setError(err.message || 'Something went wrong')
-      } finally {
-        setLoading(false)
+      if (!response.ok) {
+        throw new Error('Failed to load memories')
       }
-    }
 
+      const data = await response.json()
+      setPhotos(data)
+      setError('')
+    } catch (err) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchPhotos()
   }, [])
 
@@ -68,16 +71,7 @@ function Memories() {
         throw new Error(data.message || 'Photo upload failed')
       }
 
-      const photosResponse = await fetch(
-        'http://localhost:5000/api/photos'
-      )
-
-      if (!photosResponse.ok) {
-        throw new Error('Photo uploaded, but failed to refresh memories')
-      }
-
-      const updatedPhotos = await photosResponse.json()
-      setPhotos(updatedPhotos)
+      await fetchPhotos()
 
       setTitle('')
       setDescription('')
@@ -91,6 +85,47 @@ function Memories() {
       setUploadError(err.message || 'Something went wrong')
     } finally {
       setUploading(false)
+    }
+  }
+
+  const handleDelete = async (photoId) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this memory?'
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setDeleteError('')
+    setSuccess('')
+    setDeletingPhotoId(photoId)
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/photos/${photoId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include'
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete memory')
+      }
+
+      setPhotos((currentPhotos) =>
+        currentPhotos.filter((photo) => photo._id !== photoId)
+      )
+
+      setSuccess('Memory deleted successfully!')
+
+    } catch (err) {
+      setDeleteError(err.message || 'Something went wrong')
+    } finally {
+      setDeletingPhotoId(null)
     }
   }
 
@@ -113,6 +148,7 @@ function Memories() {
             setShowForm(!showForm)
             setUploadError('')
             setSuccess('')
+            setDeleteError('')
           }}
         >
           {showForm ? 'Cancel' : '+ Add Memory'}
@@ -121,6 +157,10 @@ function Memories() {
 
       {success && (
         <p className="upload-success">{success}</p>
+      )}
+
+      {deleteError && (
+        <p className="memories-error">{deleteError}</p>
       )}
 
       {showForm && (
@@ -154,13 +194,16 @@ function Memories() {
               rows="3"
             />
           </div>
+
           <div className="upload-field">
             <label htmlFor="memory-photo">Choose a Photo</label>
             <input
               id="memory-photo"
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              onChange={(e) => setSelectedFile(e.target.files[0] || null)}
+              onChange={(e) =>
+                setSelectedFile(e.target.files[0] || null)
+              }
               required
             />
             <small>JPEG, PNG or WebP. Maximum size: 5 MB.</small>
@@ -216,6 +259,19 @@ function Memories() {
                     {new Date(photo.dateTime).toLocaleDateString()}
                   </small>
                 </div>
+
+                {String(photo.userId?._id) === String(currentUserId) && (
+                  <button
+                    type="button"
+                    className="delete-memory-button"
+                    onClick={() => handleDelete(photo._id)}
+                    disabled={deletingPhotoId === photo._id}
+                  >
+                    {deletingPhotoId === photo._id
+                      ? 'Deleting...'
+                      : 'Delete Memory'}
+                  </button>
+                )}
               </div>
             </article>
           ))}
