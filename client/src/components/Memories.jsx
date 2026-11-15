@@ -17,6 +17,11 @@ function Memories({ currentUserId }) {
 
   const [deletingPhotoId, setDeletingPhotoId] = useState(null)
   const [deleteError, setDeleteError] = useState('')
+  const [comments, setComments] = useState({})
+const [commentInputs, setCommentInputs] = useState({})
+const [commentErrors, setCommentErrors] = useState({})
+const [submittingComment, setSubmittingComment] = useState(null)
+const [deletingCommentId, setDeletingCommentId] = useState(null)
 
   const fetchPhotos = async () => {
     try {
@@ -38,8 +43,157 @@ function Memories({ currentUserId }) {
     }
   }
 
+  const fetchComments = async (photoId) => {
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/comments/${photoId}`
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to load comments')
+    }
+
+    const data = await response.json()
+
+    setComments((currentComments) => ({
+      ...currentComments,
+      [photoId]: data
+    }))
+  } catch (err) {
+    setCommentErrors((currentErrors) => ({
+      ...currentErrors,
+      [photoId]: err.message || 'Something went wrong'
+    }))
+  }
+}
+
+const handleAddComment = async (photoId) => {
+  const commentText = commentInputs[photoId]?.trim()
+
+  if (!commentText) {
+    return
+  }
+
+  setCommentErrors((currentErrors) => ({
+    ...currentErrors,
+    [photoId]: ''
+  }))
+
+  setSubmittingComment(photoId)
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/comments',
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          photoId,
+          comment: commentText
+        })
+      }
+    )
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to add comment')
+    }
+
+    setCommentInputs((currentInputs) => ({
+      ...currentInputs,
+      [photoId]: ''
+    }))
+
+    await fetchComments(photoId)
+
+  } catch (err) {
+    setCommentErrors((currentErrors) => ({
+      ...currentErrors,
+      [photoId]: err.message || 'Something went wrong'
+    }))
+  } finally {
+    setSubmittingComment(null)
+  }
+}
+
+const handleDeleteComment = async (commentId, photoId) => {
+  const confirmed = window.confirm(
+    'Are you sure you want to delete this comment?'
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  setCommentErrors((currentErrors) => ({
+    ...currentErrors,
+    [photoId]: ''
+  }))
+
+  setDeletingCommentId(commentId)
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/comments/${commentId}`,
+      {
+        method: 'DELETE',
+        credentials: 'include'
+      }
+    )
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to delete comment')
+    }
+
+    setComments((currentComments) => ({
+      ...currentComments,
+      [photoId]: currentComments[photoId].filter(
+        (comment) => comment._id !== commentId
+      )
+    }))
+
+  } catch (err) {
+    setCommentErrors((currentErrors) => ({
+      ...currentErrors,
+      [photoId]: err.message || 'Something went wrong'
+    }))
+  } finally {
+    setDeletingCommentId(null)
+  }
+}
+
   useEffect(() => {
-    fetchPhotos()
+  const loadMemories = async () => {
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/photos'
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to load memories')
+      }
+
+      const data = await response.json()
+      setPhotos(data)
+      setError('')
+
+      data.forEach((photo) => {
+        fetchComments(photo._id)
+      })
+    } catch (err) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  loadMemories()
   }, [])
 
   const handleUpload = async (e) => {
@@ -273,6 +427,67 @@ function Memories({ currentUserId }) {
                   </button>
                 )}
               </div>
+              <div className="comments-section">
+  <h4>Comments</h4>
+
+  <div className="comments-list">
+    {(comments[photo._id] || []).map((comment) => (
+      <div className="comment-item" key={comment._id}>
+        <div className="comment-content">
+          <strong>
+            {comment.userId?.firstName || 'Unknown'}{' '}
+            {comment.userId?.lastName || ''}
+          </strong>
+
+          <p>{comment.comment}</p>
+        </div>
+
+        {String(comment.userId?._id) === String(currentUserId) && (
+          <button
+            type="button"
+            className="delete-comment-button"
+            onClick={() => handleDeleteComment(comment._id, photo._id)}
+            disabled={deletingCommentId === comment._id}
+          >
+            {deletingCommentId === comment._id ? 'Deleting...' : 'Delete'}
+          </button>
+        )}
+      </div>
+    ))}
+  </div>
+
+  {commentErrors[photo._id] && (
+    <p className="memories-error">{commentErrors[photo._id]}</p>
+  )}
+
+  <form
+    className="comment-form"
+    onSubmit={(e) => {
+      e.preventDefault()
+      handleAddComment(photo._id)
+    }}
+  >
+    <input
+      type="text"
+      placeholder="Write a comment..."
+      value={commentInputs[photo._id] || ''}
+      onChange={(e) =>
+        setCommentInputs((currentInputs) => ({
+          ...currentInputs,
+          [photo._id]: e.target.value
+        }))
+      }
+      required
+    />
+
+    <button
+      type="submit"
+      disabled={submittingComment === photo._id}
+    >
+      {submittingComment === photo._id ? 'Sending...' : 'Post'}
+    </button>
+  </form>
+</div>
             </article>
           ))}
         </div>
