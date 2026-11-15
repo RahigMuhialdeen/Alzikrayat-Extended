@@ -27,9 +27,25 @@ function Register({ onLoginClick, onHomeClick }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
-    setSuccess('')
-    setLoading(true)
+setError('')
+setSuccess('')
+
+if (!formData.firstName.trim() || !formData.lastName.trim()) {
+  setError('First name and last name are required.')
+  return
+}
+
+if (formData.password.length < 8) {
+  setError('Password must be at least 8 characters long.')
+  return
+}
+
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+  setError('Please enter a valid email address.')
+  return
+}
+
+setLoading(true)
 
     try {
       const response = await fetch(
@@ -40,7 +56,15 @@ function Register({ onLoginClick, onHomeClick }) {
             'Content-Type': 'application/json'
           },
           credentials: 'include',
-          body: JSON.stringify(formData)
+          body: JSON.stringify({
+  ...formData,
+  firstName: formData.firstName.trim(),
+  lastName: formData.lastName.trim(),
+  email: formData.email.trim().toLowerCase(),
+  location: formData.location.trim(),
+  description: formData.description.trim(),
+  occupation: formData.occupation.trim()
+})
         }
       )
 

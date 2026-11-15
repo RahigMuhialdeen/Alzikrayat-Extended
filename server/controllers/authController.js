@@ -4,10 +4,22 @@ const bcrypt = require('bcrypt');
 // Register a new user
 const registerUser = async (req, res) => {
     try {
-        const { firstName, lastName, email, password, location, description, occupation } = req.body;
+        const {
+            firstName,
+            lastName,
+            email,
+            password,
+            location,
+            description,
+            occupation
+        } = req.body;
+
+        const normalizedEmail = email.trim().toLowerCase();
 
         // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({
+            email: normalizedEmail
+        });
 
         if (existingUser) {
             return res.status(400).json({
@@ -20,9 +32,9 @@ const registerUser = async (req, res) => {
 
         // Create new user
         const newUser = new User({
-            firstName,
-            lastName,
-            email,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: normalizedEmail,
             password: hashedPassword,
             location,
             description,
@@ -31,15 +43,16 @@ const registerUser = async (req, res) => {
 
         await newUser.save();
 
-        res.status(201).json({
+        return res.status(201).json({
             message: 'User registered successfully',
             userId: newUser._id
         });
 
     } catch (error) {
-        res.status(500).json({
-            message: 'Registration failed',
-            error: error.message
+        console.error('Registration error:', error);
+
+        return res.status(500).json({
+            message: 'Registration failed'
         });
     }
 };
@@ -49,7 +62,11 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const user = await User.findOne({
+            email: normalizedEmail
+        });
 
         if (!user) {
             return res.status(400).json({
@@ -57,7 +74,10 @@ const loginUser = async (req, res) => {
             });
         }
 
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(
+            password,
+            user.password
+        );
 
         if (!isPasswordValid) {
             return res.status(400).json({
@@ -65,33 +85,40 @@ const loginUser = async (req, res) => {
             });
         }
 
+        // Regenerate session after successful login
         req.session.regenerate((error) => {
-    if (error) {
-        return res.status(500).json({
-            message: 'Session creation failed'
-        });
-    }
+            if (error) {
+                console.error('Session regeneration error:', error);
 
-    req.session.userId = user._id.toString();
+                return res.status(500).json({
+                    message: 'Session creation failed'
+                });
+            }
 
-    req.session.save((error) => {
-        if (error) {
-            return res.status(500).json({
-                message: 'Session saving failed'
+            req.session.userId = user._id.toString();
+
+            // Save session before sending response
+            req.session.save((error) => {
+                if (error) {
+                    console.error('Session saving error:', error);
+
+                    return res.status(500).json({
+                        message: 'Session saving failed'
+                    });
+                }
+
+                return res.status(200).json({
+                    message: 'Login successful',
+                    userId: user._id
+                });
             });
-        }
-
-        res.status(200).json({
-            message: 'Login successful',
-            userId: user._id
         });
-    });
-});
 
     } catch (error) {
-        res.status(500).json({
-            message: 'Login failed',
-            error: error.message
+        console.error('Login error:', error);
+
+        return res.status(500).json({
+            message: 'Login failed'
         });
     }
 };
@@ -100,14 +127,20 @@ const loginUser = async (req, res) => {
 const logoutUser = (req, res) => {
     req.session.destroy((error) => {
         if (error) {
+            console.error('Logout error:', error);
+
             return res.status(500).json({
                 message: 'Logout failed'
             });
         }
 
-        res.clearCookie('connect.sid');
+        res.clearCookie('connect.sid', {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax'
+        });
 
-        res.status(200).json({
+        return res.status(200).json({
             message: 'Logout successful'
         });
     });

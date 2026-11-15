@@ -47,21 +47,20 @@ app.use('/api/comments', commentRoutes);
 // Global Error Handler
 app.use(errorHandler);
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('MongoDB connected successfully!');
-    })
-    .catch((error) => {
-        console.error('MongoDB connection error:', error);
-    });
-
 // Test Route
 app.get('/', (req, res) => {
     res.send('Welcome to Alzikrayat API!');
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Connect to MongoDB and Start Server
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => {
+        console.log('MongoDB connected successfully!');
+
+        app.listen(PORT, () => {
+            console.log(`Server is running on http://localhost:${PORT}`);
+        });
+    })
+    .catch((error) => {
+        console.error('MongoDB connection error:', error);
+    });

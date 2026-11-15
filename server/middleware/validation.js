@@ -9,19 +9,19 @@ const validateRegistration = (req, res, next) => {
         password
     } = req.body;
 
-    if (!firstName || !firstName.trim()) {
+    if (typeof firstName !== 'string' || !firstName.trim()) {
         return res.status(400).json({
             message: 'First name is required'
         });
     }
 
-    if (!lastName || !lastName.trim()) {
+    if (typeof lastName !== 'string' || !lastName.trim()) {
         return res.status(400).json({
             message: 'Last name is required'
         });
     }
 
-    if (!email || !email.trim()) {
+    if (typeof email !== 'string' || !email.trim()) {
         return res.status(400).json({
             message: 'Email is required'
         });
@@ -35,7 +35,7 @@ const validateRegistration = (req, res, next) => {
         });
     }
 
-    if (!password || password.length < 8) {
+    if (typeof password !== 'string' || password.length < 8) {
         return res.status(400).json({
             message: 'Password must be at least 8 characters long'
         });
@@ -48,7 +48,7 @@ const validateRegistration = (req, res, next) => {
 const validateLogin = (req, res, next) => {
     const { email, password } = req.body;
 
-    if (!email || !email.trim()) {
+    if (typeof email !== 'string' || !email.trim()) {
         return res.status(400).json({
             message: 'Email is required'
         });
@@ -62,7 +62,7 @@ const validateLogin = (req, res, next) => {
         });
     }
 
-    if (!password || !password.trim()) {
+    if (typeof password !== 'string' || !password.trim()) {
         return res.status(400).json({
             message: 'Password is required'
         });
@@ -77,13 +77,13 @@ const validateComment = (req, res, next) => {
 
     const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
-    if (!photoId || !objectIdRegex.test(photoId)) {
+    if (typeof photoId !== 'string' || !objectIdRegex.test(photoId)) {
         return res.status(400).json({
             message: 'A valid photo ID is required'
         });
     }
 
-    if (!comment || !comment.trim()) {
+    if (typeof comment !== 'string' || !comment.trim()) {
         return res.status(400).json({
             message: 'Comment cannot be empty'
         });
@@ -117,7 +117,7 @@ const rejectPhotoUpload = (req, res, message) => {
 const validatePhoto = (req, res, next) => {
     const { title } = req.body;
 
-    if (!title || !title.trim()) {
+    if (typeof title !== 'string' || !title.trim()) {
         return rejectPhotoUpload(
             req,
             res,
