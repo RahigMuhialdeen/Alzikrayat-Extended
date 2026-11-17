@@ -1,6 +1,16 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 
+// Public profile: never expose the password hash
+const toPublicProfile = (user) => ({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    location: user.location,
+    description: user.description,
+    occupation: user.occupation
+});
+
 // Register a new user
 const registerUser = async (req, res) => {
     try {
@@ -109,7 +119,8 @@ const loginUser = async (req, res) => {
 
                 return res.status(200).json({
                     message: 'Login successful',
-                    userId: user._id
+                    userId: user._id,
+                    user: toPublicProfile(user)
                 });
             });
         });
@@ -119,6 +130,31 @@ const loginUser = async (req, res) => {
 
         return res.status(500).json({
             message: 'Login failed'
+        });
+    }
+};
+
+// Get the logged-in user (restores the session after a page refresh)
+const getCurrentUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+
+        if (!user) {
+            return res.status(401).json({
+                message: 'Not logged in'
+            });
+        }
+
+        return res.status(200).json({
+            userId: user._id,
+            user: toPublicProfile(user)
+        });
+
+    } catch (error) {
+        console.error('Current user error:', error);
+
+        return res.status(500).json({
+            message: 'Failed to load current user'
         });
     }
 };
@@ -149,5 +185,6 @@ const logoutUser = (req, res) => {
 module.exports = {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    getCurrentUser
 };
