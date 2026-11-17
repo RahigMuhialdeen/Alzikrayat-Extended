@@ -55,7 +55,8 @@ const upload = multer({
 const getAllPhotos = async (req, res) => {
     try {
         const photos = await Photo.find()
-            .populate('userId', 'firstName lastName');
+    .populate('userId', 'firstName lastName')
+    .sort({ dateTime: -1 });
 
         res.status(200).json(photos);
 

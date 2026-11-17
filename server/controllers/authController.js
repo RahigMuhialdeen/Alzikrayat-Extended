@@ -32,7 +32,7 @@ const registerUser = async (req, res) => {
         });
 
         if (existingUser) {
-            return res.status(400).json({
+            return res.status(409).json({
                 message: 'Email is already registered'
             });
         }
@@ -79,7 +79,7 @@ const loginUser = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(400).json({
+            return res.status(409).json({
                 message: 'Invalid email or password'
             });
         }
@@ -90,7 +90,7 @@ const loginUser = async (req, res) => {
         );
 
         if (!isPasswordValid) {
-            return res.status(400).json({
+            return res.status(401).json({
                 message: 'Invalid email or password'
             });
         }
