@@ -26,7 +26,7 @@ function Login({ onRegisterClick, onHomeClick, onLoginSuccess }) {
 
     try {
       const response = await fetch(
-        'http://localhost:5000/api/auth/login',
+        '/api/auth/login',
         {
           method: 'POST',
           headers: {
@@ -43,7 +43,7 @@ function Login({ onRegisterClick, onHomeClick, onLoginSuccess }) {
         throw new Error(data.message || 'Login failed')
       }
 
-      onLoginSuccess(data.userId)
+      onLoginSuccess(data.userId, data.user)
 
     } catch (err) {
       setError(err.message || 'Something went wrong')

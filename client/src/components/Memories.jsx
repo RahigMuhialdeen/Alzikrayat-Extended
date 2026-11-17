@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import './Memories.css'
+import { Link } from 'react-router-dom'
 
 function Memories({ currentUserId }) {
   const [photos, setPhotos] = useState([])
+  const [viewMode, setViewMode] = useState('grid')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -26,7 +28,7 @@ const [deletingCommentId, setDeletingCommentId] = useState(null)
   const fetchPhotos = async () => {
     try {
       const response = await fetch(
-        'http://localhost:5000/api/photos'
+        '/api/photos'
       )
 
       if (!response.ok) {
@@ -46,7 +48,7 @@ const [deletingCommentId, setDeletingCommentId] = useState(null)
   const fetchComments = async (photoId) => {
   try {
     const response = await fetch(
-      `http://localhost:5000/api/comments/${photoId}`
+      `/api/photos/${photoId}/comments`
     )
 
     if (!response.ok) {
@@ -83,7 +85,7 @@ const handleAddComment = async (photoId) => {
 
   try {
     const response = await fetch(
-      'http://localhost:5000/api/comments',
+      `/api/photos/${photoId}/comments`,
       {
         method: 'POST',
         credentials: 'include',
@@ -91,7 +93,6 @@ const handleAddComment = async (photoId) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          photoId,
           comment: commentText
         })
       }
@@ -138,7 +139,7 @@ const handleDeleteComment = async (commentId, photoId) => {
 
   try {
     const response = await fetch(
-      `http://localhost:5000/api/comments/${commentId}`,
+      `/api/comments/${commentId}`,
       {
         method: 'DELETE',
         credentials: 'include'
@@ -172,7 +173,7 @@ const handleDeleteComment = async (commentId, photoId) => {
   const loadMemories = async () => {
     try {
       const response = await fetch(
-        'http://localhost:5000/api/photos'
+        '/api/photos'
       )
 
       if (!response.ok) {
@@ -211,7 +212,7 @@ const handleDeleteComment = async (commentId, photoId) => {
       formData.append('description', description)
 
       const response = await fetch(
-        'http://localhost:5000/api/photos/upload',
+        '/api/photos',
         {
           method: 'POST',
           credentials: 'include',
@@ -257,7 +258,7 @@ const handleDeleteComment = async (commentId, photoId) => {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/photos/${photoId}`,
+        `/api/photos/${photoId}`,
         {
           method: 'DELETE',
           credentials: 'include'
@@ -307,6 +308,23 @@ const handleDeleteComment = async (commentId, photoId) => {
         >
           {showForm ? 'Cancel' : '+ Add Memory'}
         </button>
+        <div className="view-toggle">
+  <button
+    type="button"
+    className={viewMode === 'grid' ? 'active' : ''}
+    onClick={() => setViewMode('grid')}
+  >
+    Grid View
+  </button>
+
+  <button
+    type="button"
+    className={viewMode === 'list' ? 'active' : ''}
+    onClick={() => setViewMode('list')}
+  >
+    List View
+  </button>
+</div>
       </div>
 
       {success && (
@@ -387,17 +405,24 @@ const handleDeleteComment = async (commentId, photoId) => {
           </p>
         </div>
       ) : (
-        <div className="photo-grid">
+        <div className={`photo-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
           {photos.map((photo) => (
             <article className="photo-card" key={photo._id}>
               <img
-                src={`http://localhost:5000/uploads/${encodeURIComponent(photo.fileName)}`}
+                src={`/uploads/${encodeURIComponent(photo.fileName)}`}
                 alt={photo.title}
                 className="photo-card-image"
               />
 
               <div className="photo-card-content">
                 <h3>{photo.title}</h3>
+                
+                <Link
+  to={`/photos/${photo._id}`}
+  className="view-details-link"
+>
+  View Details →
+</Link>
 
                 {photo.description && (
                   <p>{photo.description}</p>
