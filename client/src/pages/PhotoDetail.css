@@ -5,15 +5,25 @@
 }
 
 .back-to-memories {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 25px;
-  color: #68734b;
+  padding: 11px 18px;
+  background: #68734b;
+  color: #fffdf7;
+  border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 .back-to-memories:hover {
-  color: #424b30;
+  background: #424b30;
+  color: #fffdf7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(66, 75, 48, 0.2);
 }
 
 .photo-details-card {
@@ -189,4 +199,4 @@
   .back-to-memories {
     font-size: 14px;
   }
-}
+}
