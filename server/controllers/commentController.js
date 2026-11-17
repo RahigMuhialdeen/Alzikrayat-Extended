@@ -1,16 +1,17 @@
 const mongoose = require('mongoose');
 const Comment = require('../models/Comment');
+const Photo = require('../models/Photo');
 
 // Get all comments for a photo
 const getCommentsByPhoto = async (req, res) => {
     try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.photoId)) {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return res.status(400).json({
         message: 'Invalid photo ID'
     });
 }
         const comments = await Comment.find({
-            photoId: req.params.photoId
+            photoId: req.params.id
         })
             .populate('userId', 'firstName lastName')
             .sort({ dateTime: -1 });
@@ -28,7 +29,8 @@ const getCommentsByPhoto = async (req, res) => {
 // Add a new comment
 const addComment = async (req, res) => {
     try {
-        const { photoId, comment } = req.body;
+        const photoId = req.params.id;
+        const { comment } = req.body;
 const userId = req.session.userId;
 
 if (!mongoose.Types.ObjectId.isValid(photoId)) {
@@ -36,6 +38,14 @@ if (!mongoose.Types.ObjectId.isValid(photoId)) {
         message: 'Invalid photo ID'
     });
 }
+
+        const photoExists = await Photo.exists({ _id: photoId });
+
+        if (!photoExists) {
+            return res.status(404).json({
+                message: 'Photo not found'
+            });
+        }
 
         const newComment = new Comment({
             photoId,
