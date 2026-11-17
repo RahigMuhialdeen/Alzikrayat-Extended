@@ -12,13 +12,16 @@ const commentRoutes = require('./routes/commentRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
 
 // Middleware
+
 app.use(cors({
-    origin: 'http://localhost:5174',
+    origin: process.env.CLIENT_URL || 'http://localhost:5180',
     credentials: true
 }));
+
 
 app.use(express.json());
 
