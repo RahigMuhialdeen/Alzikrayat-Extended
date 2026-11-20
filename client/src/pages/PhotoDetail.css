@@ -200,3 +200,34 @@
     font-size: 14px;
   }
 }
+
+/* Real-time connection indicator */
+.live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: -8px 0 18px;
+  font-size: 13px;
+  color: #777;
+}
+
+.live-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #b9b6a5;
+}
+
+.live-status.online {
+  color: #68734b;
+}
+
+.live-status.online .live-dot {
+  background: #68734b;
+  animation: live-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}

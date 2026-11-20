@@ -4,6 +4,7 @@ import './Gallery.css'
 import Navbar from '../components/Navbar'
 import PhotoCard from '../components/PhotoCard'
 import PhotoUploadForm from '../components/PhotoUploadForm'
+import { socket, acquireSocket } from '../socket'
 
 // Gallery page: fetches photos from the API and shows them as a grid or list
 function Gallery({ currentUserId, currentUser, onLogout }) {
@@ -16,6 +17,7 @@ function Gallery({ currentUserId, currentUser, onLogout }) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [success, setSuccess] = useState('')
+  const [liveNotice, setLiveNotice] = useState('')
 
   const [deletingPhotoId, setDeletingPhotoId] = useState(null)
   const [deleteError, setDeleteError] = useState('')
@@ -165,6 +167,36 @@ function Gallery({ currentUserId, currentUser, onLogout }) {
     loadMemories()
   }, [])
 
+  // Real-time notification when another user uploads a photo
+  useEffect(() => {
+    const release = acquireSocket()
+
+    const handlePhotoUploaded = async ({ title, uploaderId }) => {
+      // The uploader already sees their own photo
+      if (uploaderId === currentUserId) {
+        return
+      }
+
+      try {
+        const response = await fetch('/api/photos')
+
+        if (response.ok) {
+          setPhotos(await response.json())
+          setLiveNotice(`A new memory was just shared: "${title}"`)
+        }
+      } catch (err) {
+        console.error('Could not refresh memories:', err)
+      }
+    }
+
+    socket.on('photo:uploaded', handlePhotoUploaded)
+
+    return () => {
+      socket.off('photo:uploaded', handlePhotoUploaded)
+      release()
+    }
+  }, [currentUserId])
+
   const handleUpload = async ({ title, description, file }) => {
     setUploadError('')
     setSuccess('')
@@ -288,6 +320,12 @@ function Gallery({ currentUserId, currentUser, onLogout }) {
         </div>
 
         {success && <p className="upload-success">{success}</p>}
+
+        {liveNotice && (
+          <p className="upload-success" role="status">
+            {liveNotice}
+          </p>
+        )}
 
         {deleteError && <p className="memories-error">{deleteError}</p>}
 
