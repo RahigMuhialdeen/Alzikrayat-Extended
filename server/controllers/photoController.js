@@ -1,5 +1,6 @@
 const Photo = require('../models/Photo');
 const Comment = require('../models/Comment');
+const { emitToPhoto, emitToAll } = require('../socket');
 const mongoose = require('mongoose');
 
 const multer = require('multer');
@@ -122,6 +123,13 @@ const userId = req.session.userId;
 
         await newPhoto.save();
 
+        // Real-time (optional feature): live notification for other users
+        emitToAll(req.app.get('io'), 'photo:uploaded', {
+            photoId: newPhoto._id.toString(),
+            title: newPhoto.title,
+            uploaderId: userId
+        });
+
         res.status(201).json({
             message: 'Photo uploaded successfully',
             photo: newPhoto
@@ -197,6 +205,11 @@ const deletePhoto = async (req, res) => {
                 console.error('Image file deletion failed:', fileError);
             }
         }
+
+        // Real-time: tell anyone still viewing this photo that it is gone
+        emitToPhoto(req.app.get('io'), photo._id, 'photo:deleted', {
+            photoId: photo._id.toString()
+        });
 
         res.status(200).json({
             message: 'Photo and its file deleted successfully'

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Comment = require('../models/Comment');
 const Photo = require('../models/Photo');
+const { emitToPhoto } = require('../socket');
 
 // Get all comments for a photo
 const getCommentsByPhoto = async (req, res) => {
@@ -55,6 +56,17 @@ if (!mongoose.Types.ObjectId.isValid(photoId)) {
 
         await newComment.save();
 
+        // Include the author's name so clients can render it immediately
+        await newComment.populate('userId', 'firstName lastName');
+
+        // Real-time: push the new comment to everyone viewing this photo
+        emitToPhoto(
+            req.app.get('io'),
+            photoId,
+            'comment:new',
+            newComment.toJSON()
+        );
+
         res.status(201).json({
             message: 'Comment added successfully',
             newComment
@@ -94,6 +106,17 @@ const deleteComment = async (req, res) => {
         }
 
         await Comment.findByIdAndDelete(req.params.id);
+
+        // Real-time: remove the comment from other viewers' screens
+        emitToPhoto(
+            req.app.get('io'),
+            comment.photoId,
+            'comment:deleted',
+            {
+                commentId: comment._id.toString(),
+                photoId: comment.photoId.toString()
+            }
+        );
 
         res.status(200).json({
             message: 'Comment deleted successfully'

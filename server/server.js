@@ -1,3 +1,4 @@
+const http = require('http');
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -10,15 +11,24 @@ const photoRoutes = require('./routes/photoRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 
 const errorHandler = require('./middleware/errorHandler');
+const { initSocket } = require('./socket');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5180';
+
+// Express and Socket.io share one HTTP server
+const server = http.createServer(app);
+const io = initSocket(server, CLIENT_URL);
+
+// Controllers reach Socket.io through req.app.get('io')
+app.set('io', io);
 
 
 // Middleware
 
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5180',
+    origin: CLIENT_URL,
     credentials: true
 }));
 
@@ -60,7 +70,7 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('MongoDB connected successfully!');
 
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`Server is running on http://localhost:${PORT}`);
         });
     })
